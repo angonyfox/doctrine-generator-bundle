@@ -83,11 +83,6 @@ public function <methodName>(<methodTypeHint>$<variableName>);';
         return str_replace('<spaces>', $this->spaces, $code);
     }
 
-    public function generateClass(ClassMetadataInfo $metadata)
-    {
-        return $this->generateEntityClass($metadata);
-    }
-
     protected function generateEntityClassName(ClassMetadataInfo $metadata)
     {
         return 'interface ' . $this->getClassName($metadata);
@@ -148,6 +143,11 @@ public function <methodName>(<methodTypeHint>$<variableName>);';
         );
 
         return $this->prefixCodeWithSpaces($method);
+    }
+
+    public function writeClass(ClassMetadataInfo $metadata, $outputDirectory)
+    {
+        $this->writeEntityClass($metadata, $outputDirectory);
     }
 
 }

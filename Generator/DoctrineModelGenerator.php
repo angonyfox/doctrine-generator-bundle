@@ -31,6 +31,7 @@ class DoctrineModelGenerator extends Generator
             array($bundle->getName() => $bundle->getNamespace().'\\Model'),
             $config->getEntityNamespaces()
         ));
+        $path = $bundle->getPath().str_repeat('/..', substr_count(get_class($bundle), '\\'));
 
         $entityClassName = $this->registry->getAliasNamespace($bundle->getName()).'\\'.$model;
         $modelNamespace = str_replace('\Entity', '\Model', $this->registry->getAliasNamespace($bundle->getName()));
@@ -60,11 +61,11 @@ class DoctrineModelGenerator extends Generator
             foreach ($fields as $field) {
                 $interfaceClass->mapField($field);
             }
-            $interfacePath = $bundle->getPath().'/Model/'.str_replace('\\', '/', $model).'Interface.php';
-            $interfaceCode = $this->getInterfaceGenerator()->generateClass($interfaceClass);
-            file_put_contents($interfacePath, $interfaceCode);
+            $this->getInterfaceGenerator()->writeClass($interfaceClass, $path);
         }
 
+        $entityClass = new ClassMetadataInfo($entityClassName);
+        $entityClass->setParentClasses(array($modelClass));
 
         if ('annotation' === $format) {
             $modelGenerator->setGenerateAnnotations(true);
@@ -79,8 +80,6 @@ class DoctrineModelGenerator extends Generator
                 throw new \RuntimeException(sprintf('Cannot generate entity when mapping "%s" already exists.', $mappingPath));
             }
 
-            $entityClass = new ClassMetadataInfo($entityClassName);
-            $entityClass->setParentClasses(array($modelClass));
             $entityClass->mapField(array('fieldName' => 'id', 'type' => 'integer', 'id' => true));
             $entityClass->setIdGeneratorType(ClassMetadataInfo::GENERATOR_TYPE_AUTO);
             foreach ($fields as $field) {
@@ -100,9 +99,14 @@ class DoctrineModelGenerator extends Generator
             file_put_contents($mappingPath, $mappingCode);
         }
 
-        if ($withRepository) {
-            $path = $bundle->getPath().str_repeat('/..', substr_count(get_class($bundle), '\\'));
+        if ($withRepository)
+        {
             $this->getRepositoryGenerator()->writeEntityRepositoryClass($class->customRepositoryClassName, $path);
+        }
+        if ($withEntity)
+        {
+            $entityPath = $bundle->getPath().'/Entity/'.str_replace('\\', '/', $model).'.php';
+            $this->getEntityGenerator()->writeClass($entityClass, $path);
         }
     }
 
@@ -141,7 +145,12 @@ class DoctrineModelGenerator extends Generator
 
     protected function getEntityGenerator()
     {
-        return new EntityGenerator();
+        $entityGenerator = new EntityGenerator();
+        $entityGenerator->setGenerateStubMethods(false);
+        $entityGenerator->setRegenerateEntityIfExists(false);
+        $entityGenerator->setUpdateEntityIfExists(true);
+        $entityGenerator->setNumSpaces(4);
+        return $entityGenerator;
     }
 
 }
