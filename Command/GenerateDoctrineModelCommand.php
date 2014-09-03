@@ -72,13 +72,13 @@ HELP;
     {
         $dialog = $this->getDialogHelper();
 
-        if ($input->isInteractive()) {
-            if (!$dialog->askConfirmation($output, $dialog->getQuestion('Do you confirm generation', 'yes', '?'), true)) {
-                $output->writeln('<error>Command aborted</error>');
-
-                return 1;
-            }
-        }
+        // if ($input->isInteractive()) {
+        //     if (!$dialog->askConfirmation($output, $dialog->getQuestion('Do you confirm generation', 'yes', '?'), true)) {
+        //         $output->writeln('<error>Command aborted</error>');
+        //
+        //         return 1;
+        //     }
+        // }
 
         $model = Validators::validateEntityName($input->getOption('model'));
         list($bundle, $model) = $this->parseShortcutNotation($model);
