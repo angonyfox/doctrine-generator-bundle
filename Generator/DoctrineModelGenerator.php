@@ -102,7 +102,6 @@ class DoctrineModelGenerator extends Generator
         }
         if ($withEntity)
         {
-            $entityPath = $bundle->getPath().'/Entity/'.str_replace('\\', '/', $model).'.php';
             $this->getEntityGenerator()->writeClass($entityClass, $path);
         }
     }
