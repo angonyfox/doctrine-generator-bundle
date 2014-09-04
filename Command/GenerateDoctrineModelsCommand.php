@@ -8,8 +8,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\Bundle\DoctrineBundle\Mapping\DisconnectedMetadataFactory;
+use Doctrine\ORM\Tools\EntityRepositoryGenerator;
 use Pandora\DoctrineGeneratorBundle\Generator\DoctrineModelGenerator;
-
 use Pandora\DoctrineGeneratorBundle\Tools\ModelGenerator;
 use Pandora\DoctrineGeneratorBundle\Tools\InterfaceGenerator;
 use Pandora\DoctrineGeneratorBundle\Tools\EntityGenerator;
@@ -98,22 +98,16 @@ HELP;
             }
         }
 
-        $modelGenerator = $this->getModelGenerator();
-
         $backupExisting = !$input->getOption('no-backup');
         $withRepository = $input->getOption('with-repository');
         $withInterface = $input->getOption('with-interface');
         $withEntity = $input->getOption('with-entity');
 
-        // $generator->setBackupExisting($backupExisting);
-        //
-        // $repoGenerator = new EntityRepositoryGenerator();
+        $modelGenerator = $this->getModelGenerator();
+        $modelGenerator->setBackupExisting($backupExisting);
+
         foreach ($metadata->getMetadata() as $m)
         {
-        //     if ($backupExisting) {
-        //         $basename = substr($m->name, strrpos($m->name, '\\') + 1);
-        //         $output->writeln(sprintf('  > backing up <comment>%s.php</comment> to <comment>%s.php~</comment>', $basename, $basename));
-        //     }
             // Getting the metadata for the entity class once more to get the correct path if the namespace has multiple occurrences
             try {
                 $entityMetadata = $manager->getClassMetadata($m->getName(), $input->getOption('path'));
@@ -121,31 +115,46 @@ HELP;
                 // fall back to the bundle metadata when no entity class could be found
                 $entityMetadata = $metadata;
             }
-            $output->writeln(get_class($entityMetadata));
 
             $path = $entityMetadata->getPath();
 
-            $modelMetadata = $m;
+            $modelMetadata = clone($m);
             $modelMetadata->name = str_replace('\Entity', '\Model', $modelMetadata->name);
             $modelMetadata->namespace = str_replace('\Entity', '\Model', $modelMetadata->namespace);
             $modelMetadata->rootEntityName = str_replace('\Entity', '\Model', $modelMetadata->rootEntityName);
             // var_dump($modelMetadata);
 
-            $output->writeln(sprintf('  > generating <comment>%s</comment>', $m->name));
             if ($withInterface)
             {
                 $modelGenerator->setClasstoImplement($modelMetadata->name."Interface");
                 $interfaceMetadata = clone($modelMetadata);
                 $interfaceMetadata->name .= "Interface";
                 $interfaceMetadata->rootEntityName .= "Interface";
-                $this->getInterfaceGenerator()->writeClass($interfaceMetadata, $path);
+                $output->writeln(sprintf('  > generating <comment>%s</comment>', $interfaceMetadata->name));
+                $interfaceGenerator = $this->getInterfaceGenerator();
+                $interfaceGenerator->setBackupExisting($backupExisting);
+                $interfaceGenerator->writeClass($interfaceMetadata, $path);
             }
+            $output->writeln(sprintf('  > generating <comment>%s</comment>', $modelMetadata->name));
         //     $generator->generate(array($m), $entityMetadata->getPath());
             $modelGenerator->writeClass($modelMetadata, $path);
 
-        //     if ($m->customRepositoryClassName && false !== strpos($m->customRepositoryClassName, $metadata->getNamespace())) {
-        //         $repoGenerator->writeEntityRepositoryClass($m->customRepositoryClassName, $metadata->getPath());
-        //     }
+            if ($withRepository)
+            {
+                $repositoryClassName = $m->name.'Repository';
+                $output->writeln(sprintf('  > generating <comment>%s</comment>', $repositoryClassName));
+                $this->getRepositoryGenerator()->writeEntityRepositoryClass($repositoryClassName, $path);
+            }
+            if ($withEntity)
+            {
+                $entityMetadata = clone($m);
+                $entityMetadata->setParentClasses(array($modelMetadata->name));
+                $output->writeln(sprintf('  > generating <comment>%s</comment>', $entityMetadata->name));
+                $entityGenerator = $this->getEntityGenerator();
+                $entityGenerator->setBackupExisting($backupExisting);
+                $entityGenerator->writeClass($entityMetadata, $path);
+            }
+
         }
     }
 
