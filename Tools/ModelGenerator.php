@@ -39,6 +39,11 @@ class ModelGenerator extends Generator
         ;
     }
 
+    public function writeClass(ClassMetadataInfo $metadata, $outputDirectory)
+    {
+        $this->writeEntityClass($metadata, $outputDirectory);
+    }
+
     /**
      * @return bool
      */

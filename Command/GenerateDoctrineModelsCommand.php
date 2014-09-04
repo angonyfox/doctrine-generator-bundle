@@ -1,13 +1,20 @@
 <?
 namespace Pandora\DoctrineGeneratorBundle\Command;
 
+use Sensio\Bundle\GeneratorBundle\Command\GenerateDoctrineCommand;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Doctrine\Bundle\DoctrineBundle\Mapping\DisconnectedMetadataFactory;
+use Pandora\DoctrineGeneratorBundle\Generator\DoctrineModelGenerator;
 
-class GenerateDoctrineModelsCommand extends ContainerAwareCommand
+use Pandora\DoctrineGeneratorBundle\Tools\ModelGenerator;
+use Pandora\DoctrineGeneratorBundle\Tools\InterfaceGenerator;
+use Pandora\DoctrineGeneratorBundle\Tools\EntityGenerator;
+
+class GenerateDoctrineModelsCommand extends GenerateDoctrineCommand
 {
     protected function configure()
     {
@@ -15,34 +22,173 @@ class GenerateDoctrineModelsCommand extends ContainerAwareCommand
 The <info>doctrine:generate:models</info> command generates model classes
 from your mapping information:
 
+* To a bundle:
+
   <info>php app/console doctrine:generate:models YourBundle</info>
+
+* To a single model:
+
+  <info>php app/console doctrine:generate:models YourBundle:User</info>
+  <info>php app/console doctrine:generate:models Your/Bundle/Model/User</info>
+
+* To a namespace:
+
+  <info>php app/console doctrine:generate:models YourBundle/Model</info>
+
+If the entities are not stored in a bundle, and if the classes do not exist,
+the command has no way to guess where they should be generated. In this case,
+you must provide the <comment>--path</comment> option:
+
+  <info>php app/console doctrine:generate:models Your/Bundle/Model --path=src/</info>
+
+By default, the unmodified version of each model is backed up and saved
+(e.g. Product.php~). To prevent this task from creating the backup file,
+pass the <comment>--no-backup</comment> option:
+
+  <info>php app/console doctrine:generate:models Your/Bundle/Model --no-backup</info>
+
+<error>Important:</error> Even if you specified Inheritance options in your
+XML or YAML Mapping files the generator cannot generate the base and
+child classes for you correctly, because it doesnot know which
+class is supposed to extend which. You have to adjust the model
+code manually for inheritance to work!
 
 HELP;
         $this
             ->setName('doctrine:generate:models')
             ->setAliases(array('generate:doctrine:models'))
             ->setDescription('Generate model classes from your mapping information')
-            // ->addArgument('bundle', null, 'A bundle name')
-            // ->addOption('without-listeners', null, InputOption::VALUE_OPTIONAL, '', true)
+            ->addArgument('name', InputArgument::REQUIRED, 'A bundle name, a namespace, or a class name')
+            ->addOption('path', null, InputOption::VALUE_REQUIRED, 'The path where to generate entities when it cannot be guessed')
+            ->addOption('no-backup', null, InputOption::VALUE_NONE, 'Do not backup existing entities files.')
+            ->addOption('with-repository', null, InputOption::VALUE_NONE, 'Whether to generate the entity repository or not')
+            ->addOption('with-entity', null, InputOption::VALUE_NONE, 'Whether to generate the entity or not')
+            ->addOption('with-interface', null, InputOption::VALUE_NONE, 'Whether to generate the interface or not')
             ->setHelp($help)
-            ->addArgument('name', InputArgument::OPTIONAL, 'Who do you want to greet?')
-            ->addOption('yell', null, InputOption::VALUE_NONE, 'If set, the task will yell in uppercase letters')
         ;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $name = $input->getArgument('name');
-        if ($name) {
-            $text = 'Hello '.$name;
-        } else {
-            $text = 'Hello';
+        $manager = new DisconnectedMetadataFactory($this->getContainer()->get('doctrine'));
+
+        try {
+            $bundle = $this->getApplication()->getKernel()->getBundle($input->getArgument('name'));
+
+            $output->writeln(sprintf('Generating models for bundle "<info>%s</info>"', $bundle->getName()));
+            $metadata = $manager->getBundleMetadata($bundle);
+        } catch (\InvalidArgumentException $e) {
+            $name = strtr($input->getArgument('name'), '/', '\\');
+
+            if (false !== $pos = strpos($name, ':')) {
+                $name = $this->getContainer()->get('doctrine')->getAliasNamespace(substr($name, 0, $pos)).'\\'.substr($name, $pos + 1);
+            }
+
+            if (class_exists($name)) {
+                $modelName = str_replace('\Entity', '\Model', $name);
+                $output->writeln(sprintf('Generating model "<info>%s</info>"', $modelName));
+                $metadata = $manager->getClassMetadata($name, $input->getOption('path'));
+            } else {
+                $output->writeln(sprintf('Generating models for namespace "<info>%s</info>"', $name));
+                $entityNamespace = str_replace('\Model', '\Entity', $name);
+                $metadata = $manager->getNamespaceMetadata($entityNamespace, $input->getOption('path'));
+            }
         }
 
-        if ($input->getOption('yell')) {
-            $text = strtoupper($text);
-        }
+        $modelGenerator = $this->getModelGenerator();
 
-        $output->writeln($text);
+        $backupExisting = !$input->getOption('no-backup');
+        $withRepository = $input->getOption('with-repository');
+        $withInterface = $input->getOption('with-interface');
+        $withEntity = $input->getOption('with-entity');
+
+        // $generator->setBackupExisting($backupExisting);
+        //
+        // $repoGenerator = new EntityRepositoryGenerator();
+        foreach ($metadata->getMetadata() as $m)
+        {
+        //     if ($backupExisting) {
+        //         $basename = substr($m->name, strrpos($m->name, '\\') + 1);
+        //         $output->writeln(sprintf('  > backing up <comment>%s.php</comment> to <comment>%s.php~</comment>', $basename, $basename));
+        //     }
+            // Getting the metadata for the entity class once more to get the correct path if the namespace has multiple occurrences
+            try {
+                $entityMetadata = $manager->getClassMetadata($m->getName(), $input->getOption('path'));
+            } catch (\RuntimeException $e) {
+                // fall back to the bundle metadata when no entity class could be found
+                $entityMetadata = $metadata;
+            }
+            $output->writeln(get_class($entityMetadata));
+
+            $path = $entityMetadata->getPath();
+
+            $modelMetadata = $m;
+            $modelMetadata->name = str_replace('\Entity', '\Model', $modelMetadata->name);
+            $modelMetadata->namespace = str_replace('\Entity', '\Model', $modelMetadata->namespace);
+            $modelMetadata->rootEntityName = str_replace('\Entity', '\Model', $modelMetadata->rootEntityName);
+            // var_dump($modelMetadata);
+
+            $output->writeln(sprintf('  > generating <comment>%s</comment>', $m->name));
+            if ($withInterface)
+            {
+                $modelGenerator->setClasstoImplement($modelMetadata->name."Interface");
+                $interfaceMetadata = clone($modelMetadata);
+                $interfaceMetadata->name .= "Interface";
+                $interfaceMetadata->rootEntityName .= "Interface";
+                $this->getInterfaceGenerator()->writeClass($interfaceMetadata, $path);
+            }
+        //     $generator->generate(array($m), $entityMetadata->getPath());
+            $modelGenerator->writeClass($modelMetadata, $path);
+
+        //     if ($m->customRepositoryClassName && false !== strpos($m->customRepositoryClassName, $metadata->getNamespace())) {
+        //         $repoGenerator->writeEntityRepositoryClass($m->customRepositoryClassName, $metadata->getPath());
+        //     }
+        }
+    }
+
+    protected function createGenerator()
+    {
+        return null;
+    }
+
+    protected function getModelGenerator()
+    {
+        $modelGenerator = new ModelGenerator();
+        $modelGenerator->setGenerateAnnotations(false);
+        $modelGenerator->setGenerateStubMethods(true);
+        $modelGenerator->setRegenerateEntityIfExists(false);
+        $modelGenerator->setUpdateEntityIfExists(true);
+        $modelGenerator->setNumSpaces(4);
+        $modelGenerator->setAnnotationPrefix('ORM\\');
+
+        return $modelGenerator;
+    }
+
+    protected function getRepositoryGenerator()
+    {
+        return new EntityRepositoryGenerator();
+    }
+
+    protected function getInterfaceGenerator()
+    {
+        $interfaceGenerator = new InterfaceGenerator();
+        $interfaceGenerator->setGenerateStubMethods(true);
+        $interfaceGenerator->setRegenerateEntityIfExists(false);
+        $interfaceGenerator->setUpdateEntityIfExists(true);
+        $interfaceGenerator->setNumSpaces(4);
+        return $interfaceGenerator;
+    }
+
+    protected function getEntityGenerator()
+    {
+        $entityGenerator = new EntityGenerator();
+        $entityGenerator->setGenerateStubMethods(false);
+        $entityGenerator->setRegenerateEntityIfExists(false);
+        $entityGenerator->setUpdateEntityIfExists(true);
+        $entityGenerator->setNumSpaces(4);
+        return $entityGenerator;
     }
 }
