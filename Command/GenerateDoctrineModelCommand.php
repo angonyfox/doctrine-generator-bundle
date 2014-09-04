@@ -4,13 +4,13 @@ namespace Pandora\DoctrineGeneratorBundle\Command;
 use Sensio\Bundle\GeneratorBundle\Command\GenerateDoctrineCommand;
 use Sensio\Bundle\GeneratorBundle\Command\Validators;
 use Sensio\Bundle\GeneratorBundle\Command\Helper\DialogHelper;
-use Pandora\DoctrineGeneratorBundle\Generator\DoctrineModelGenerator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Container;
 use Doctrine\DBAL\Types\Type;
+use Pandora\DoctrineGeneratorBundle\Generator\DoctrineModelGenerator;
 
 class GenerateDoctrineModelCommand extends GenerateDoctrineCommand
 {
