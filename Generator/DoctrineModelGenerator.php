@@ -55,12 +55,9 @@ class DoctrineModelGenerator extends Generator
         if ($withInterface)
         {
             $modelGenerator->setClasstoImplement($modelClass."Interface");
-            $interfaceClass = new ClassMetadataInfo($modelClass."Interface");
-            $interfaceClass->mapField(array('fieldName' => 'id', 'type' => 'integer', 'id' => true));
-            $interfaceClass->setIdGeneratorType(ClassMetadataInfo::GENERATOR_TYPE_AUTO);
-            foreach ($fields as $field) {
-                $interfaceClass->mapField($field);
-            }
+            $interfaceClass = clone($class);
+            $interfaceClass->name .= "Interface";
+            $interfaceClass->rootEntityName .= "Interface";
             $this->getInterfaceGenerator()->writeClass($interfaceClass, $path);
         }
 
