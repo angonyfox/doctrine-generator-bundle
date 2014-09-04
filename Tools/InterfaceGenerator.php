@@ -83,6 +83,11 @@ public function <methodName>(<methodTypeHint>$<variableName>);';
         return str_replace('<spaces>', $this->spaces, $code);
     }
 
+    public function writeClass(ClassMetadataInfo $metadata, $outputDirectory)
+    {
+        $this->writeEntityClass($metadata, $outputDirectory);
+    }
+
     protected function generateEntityClassName(ClassMetadataInfo $metadata)
     {
         return 'interface ' . $this->getClassName($metadata);
@@ -145,9 +150,50 @@ public function <methodName>(<methodTypeHint>$<variableName>);';
         return $this->prefixCodeWithSpaces($method);
     }
 
-    public function writeClass(ClassMetadataInfo $metadata, $outputDirectory)
+    protected function parseTokensInEntityFile($src)
     {
-        $this->writeEntityClass($metadata, $outputDirectory);
-    }
+        $tokens = token_get_all($src);
+        $lastSeenNamespace = "";
+        $lastSeenClass = false;
 
+        $inNamespace = false;
+        $inClass = false;
+
+        for ($i = 0; $i < count($tokens); $i++) {
+            $token = $tokens[$i];
+            if (in_array($token[0], array(T_WHITESPACE, T_COMMENT, T_DOC_COMMENT))) {
+                continue;
+            }
+
+            if ($inNamespace) {
+                if ($token[0] == T_NS_SEPARATOR || $token[0] == T_STRING) {
+                    $lastSeenNamespace .= $token[1];
+                } elseif (is_string($token) && in_array($token, array(';', '{'))) {
+                    $inNamespace = false;
+                }
+            }
+
+            if ($inClass) {
+                $inClass = false;
+                $lastSeenClass = $lastSeenNamespace . ($lastSeenNamespace ? '\\' : '') . $token[1];
+                $this->staticReflection[$lastSeenClass]['properties'] = array();
+                $this->staticReflection[$lastSeenClass]['methods'] = array();
+            }
+
+            if ($token[0] == T_NAMESPACE) {
+                $lastSeenNamespace = "";
+                $inNamespace = true;
+            } elseif (in_array($token[0], array(T_CLASS, T_INTERFACE))) {
+                $inClass = true;
+            } elseif ($token[0] == T_FUNCTION) {
+                if ($tokens[$i+2][0] == T_STRING) {
+                    $this->staticReflection[$lastSeenClass]['methods'][] = $tokens[$i+2][1];
+                } elseif ($tokens[$i+2] == "&" && $tokens[$i+3][0] == T_STRING) {
+                    $this->staticReflection[$lastSeenClass]['methods'][] = $tokens[$i+3][1];
+                }
+            } elseif (in_array($token[0], array(T_VAR, T_PUBLIC, T_PRIVATE, T_PROTECTED)) && $tokens[$i+2][0] != T_FUNCTION) {
+                $this->staticReflection[$lastSeenClass]['properties'][] = substr($tokens[$i+2][1], 1);
+            }
+        }
+    }
 }
