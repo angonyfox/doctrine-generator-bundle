@@ -47,6 +47,14 @@ pass the <comment>--no-backup</comment> option:
 
   <info>php app/console doctrine:generate:models Your/Bundle/Model --no-backup</info>
 
+To generate or update the corresponding entity class, use the <comment>--with-entity</comment> option:
+
+  <info>php app/console doctrine:generate:models YourBundle --with-entity</info>
+
+To generate the corresponding interface class, use the <comment>--with-interface</comment> option:
+
+  <info>php app/console doctrine:generate:models YourBundle --with-interface</info>
+
 <error>Important:</error> Even if you specified Inheritance options in your
 XML or YAML Mapping files the generator cannot generate the base and
 child classes for you correctly, because it doesnot know which

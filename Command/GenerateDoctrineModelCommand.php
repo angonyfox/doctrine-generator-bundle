@@ -20,35 +20,35 @@ class GenerateDoctrineModelCommand extends GenerateDoctrineCommand
 The <info>doctrine:generate:model</info> command generates model class
 from your mapping information:
 
-  <info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post</info>
+  <info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post</info>
 
 The above command would initialize a new model in the following model namespace
 <info>Acme\BlogBundle\Model\Blog\Post</info>
 
 You can also optionally spectify the fields you want to generate in the new model:
 
-  <info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --fields="title:string(255) body:text"</info>
+  <info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --fields="title:string(255) body:text"</info>
 
 The command can also generate the corresponding entity repository class with the
 <comment>--with-repository</comment> option:
 
-<info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-repository</info>
+<info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-repository</info>
 
 By default, the command uses annotations for the mapping information; change it
 with <comment>--format</comment>:
 
-<info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --format=yml</info>
+<info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --format=yml</info>
 
 To generate or update the corresponding entity class, use the `<comment>--with-entity</comment>` option:
-<info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-entity</info>
+<info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-entity</info>
 
 To generate the corresponding interface class, use the `<comment>--with-interface</comment>` option:
-<info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-interface</info>
+<info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-interface</info>
 
 To deactivate the interaction mode, simply use the `<comment>--no-interaction</comment>` option
 without forgetting to pass all needed options:
 
-<info>php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --format=annotation --fields="title:string(255) body:text" --with-repository --no-interaction</info>
+<info>php app/console doctrine:generate:model --model=YourBundle:Blog/Post --format=annotation --fields="title:string(255) body:text" --with-repository --no-interaction</info>
 
 HELP;
         $this
