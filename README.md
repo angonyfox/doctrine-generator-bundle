@@ -31,7 +31,7 @@ Available Commands
 Usage
 -----
 
-# doctrine:generate:model
+### doctrine:generate:model
 
 ```
 php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post
@@ -60,19 +60,19 @@ with *--format*:
 php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --format=yml
 ```
 
-To generate or update the corresponding entity class, use the `*--with-entity*` option:
+To generate or update the corresponding entity class, use the *--with-entity* option:
 
 ```
 php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-entity
 ```
 
-To generate the corresponding interface class, use the `*--with-interface*` option:
+To generate the corresponding interface class, use the *--with-interface* option:
 
 ```
 php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-interface
 ```
 
-# doctrine:generate:models
+### doctrine:generate:models
 
 * To a bundle:
 
@@ -108,6 +108,18 @@ pass the *--no-backup* option:
 
 ```
 php app/console doctrine:generate:models Your/Bundle/Model --no-backup
+```
+
+To generate or update the corresponding entity class, use the *--with-entity* option:
+
+```
+php app/console doctrine:generate:models YourBundle --with-entity
+```
+
+To generate the corresponding interface class, use the *--with-interface* option:
+
+```
+php app/console doctrine:generate:models YourBundle --with-interface
 ```
 
 **Important:** Even if you specified Inheritance options in your
