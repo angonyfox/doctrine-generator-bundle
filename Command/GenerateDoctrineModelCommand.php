@@ -54,7 +54,7 @@ HELP;
         $this
           ->setName('doctrine:generate:model')
           ->setAliases(array('generate:doctrine:model'))
-          ->setDescription('Generate model classes from your mapping information')
+          ->setDescription('Generate model class from your mapping information')
           ->addOption('model', null, InputOption::VALUE_REQUIRED, 'The model class name to initialize (shortcut notation)')
           ->addOption('fields', null, InputOption::VALUE_REQUIRED, 'The fields to create with the new model')
           ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Use the format for configuration files (php, xml, yml, or annotation)', 'annotation')
