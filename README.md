@@ -34,7 +34,7 @@ Usage
 ### doctrine:generate:model
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post
 ```
 
 The above command would initialize a new model in the following model namespace
@@ -43,33 +43,33 @@ The above command would initialize a new model in the following model namespace
 You can also optionally spectify the fields you want to generate in the new model:
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --fields="title:string(255) body:text"
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post --fields="title:string(255) body:text"
 ```
 
 The command can also generate the corresponding entity repository class with the
 *--with-repository* option:
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-repository
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-repository
 ```
 
 By default, the command uses annotations for the mapping information; change it
 with *--format*:
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --format=yml
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post --format=yml
 ```
 
 To generate or update the corresponding entity class, use the *--with-entity* option:
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-entity
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-entity
 ```
 
 To generate the corresponding interface class, use the *--with-interface* option:
 
 ```
-php app/console doctrine:generate:model --model=AcmeBlogBundle:Blog/Post --with-interface
+php app/console doctrine:generate:model --model=YourBundle:Blog/Post --with-interface
 ```
 
 ### doctrine:generate:models
