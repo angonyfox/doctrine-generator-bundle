@@ -1,0 +1,21 @@
+{
+    "name" : "pandora/doctrine-generator-bundle",
+    "description" : "Symfony2 bundle to generate model or interface class",
+    "type" : "symfony-bundle",
+    "authors" : [{
+        "name" : "angonyfox",
+        "email" : "angonyfox@gmail.com"
+    }],
+    "keywords" : [
+        "symfony", "model", "interface", "doctrine", "generator"
+    ],
+    "license" : [
+        "MIT"
+    ],
+    "autoload" : {
+        "psr-0" : {
+            "Pandora\\DoctrineGeneratorBundle" : ""
+        }
+    },
+    "target-dir": "Pandora/DoctrineGeneratorBundle"
+}
